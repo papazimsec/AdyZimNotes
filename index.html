@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WaldNotes — ZIMSEC AI Study Notes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --surface: #141414;
+      --card: #1a1a1a;
+      --border: #252525;
+      --gold: #c9a84c;
+      --text: #f0ece2;
+      --muted: #777;
+      --soft: #aaa;
+      --green: #4caf7d;
+      --blue: #4c8fc9;
+      --rose: #c94c6e;
+      --purple: #8b5cf6;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg); color:var(--text);
+      font-family:'DM Sans',sans-serif; font-weight:300;
+      min-height:100vh;
+    }
+
+    /* NAV */
+    nav {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:1.2rem 5vw; border-bottom:1px solid var(--border);
+      position:sticky; top:0;
+      background:rgba(11,11,11,0.97); backdrop-filter:blur(12px);
+      z-index:200;
+    }
+    .logo {
+      font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:900;
+      color:var(--text); text-decoration:none;
+    }
+    .logo span { color:var(--gold); }
+    .nav-tag {
+      font-size:0.68rem; letter-spacing:0.15em; text-transform:uppercase;
+      color:var(--green); border:1px solid var(--green);
+      padding:0.22rem 0.65rem; border-radius:20px;
+    }
+
+    /* HERO */
+    .hero {
+      padding:5rem 5vw 3.5rem; position:relative; overflow:hidden;
+    }
+    .hero::before {
+      content:''; position:absolute; top:-150px; right:-150px;
+      width:700px; height:700px;
+      background:radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 65%);
+      pointer-events:none;
+    }
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:0.5rem;
+      border:1px solid var(--gold); color:var(--gold);
+      font-size:0.7rem; letter-spacing:0.18em; text-transform:uppercase;
+      padding:0.28rem 0.85rem; border-radius:2px; margin-bottom:1.4rem;
+    }
+    .hero h1 {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(2.6rem,6vw,5rem); font-weight:900; line-height:1.05;
+      max-width:700px; margin-bottom:1.1rem;
+    }
+    .hero h1 em { font-style:italic; color:var(--gold); }
+    .hero p {
+      max-width:480px; color:var(--soft); font-size:0.97rem; line-height:1.75;
+      margin-bottom:2rem;
+    }
+    .hero-stats { display:flex; gap:3rem; flex-wrap:wrap; }
+    .stat-num {
+      font-family:'Playfair Display',serif; font-size:1.9rem; font-weight:900;
+      color:var(--gold); display:block;
+    }
+    .stat-label { font-size:0.78rem; color:var(--muted); }
+
+    /* SEARCH */
+    .search-wrap { padding:1.5rem 5vw; border-bottom:1px solid var(--border); }
+    .search-inner {
+      display:flex; align-items:center; gap:0.8rem;
+      background:var(--surface); border:1px solid var(--border);
+      padding:0.75rem 1.1rem; max-width:560px;
+      transition:border-color 0.2s;
+    }
+    .search-inner:focus-within { border-color:var(--gold); }
+    .search-inner input {
+      background:none; border:none; outline:none;
+      color:var(--text); font-family:'DM Sans',sans-serif;
+      font-size:0.93rem; font-weight:300; width:100%;
+    }
+    .search-inner input::placeholder { color:var(--muted); }
+
+    /* LAYOUT */
+    .main-layout {
+      display:grid; grid-template-columns:285px 1fr;
+      min-height:calc(100vh - 57px);
+    }
+    @media(max-width:860px) {
+      .main-layout { grid-template-columns:1fr; }
+      .sidebar { position:relative; height:auto; max-height:300px; border-right:none; border-bottom:1px solid var(--border); }
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      border-right:1px solid var(--border); background:var(--surface);
+      position:sticky; top:57px; height:calc(100vh - 57px);
+      overflow-y:auto; padding:1.2rem 0;
+    }
+    .sidebar::-webkit-scrollbar { width:3px; }
+    .sidebar::-webkit-scrollbar-thumb { background:var(--border); }
+
+    .sb-cluster { margin-bottom:0.3rem; }
+    .sb-cluster-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0.55rem 1.3rem; cursor:pointer;
+      transition:background 0.15s;
+    }
+    .sb-cluster-header:hover { background:rgba(255,255,255,0.025); }
+    .sb-cluster-label {
+      font-size:0.67rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:500;
+    }
+    .sb-toggle { color:var(--muted); font-size:0.75rem; transition:transform 0.2s; }
+    .sb-cluster.open .sb-toggle { transform:rotate(180deg); }
+    .sb-subjects { display:none; }
+    .sb-cluster.open .sb-subjects { display:block; }
+
+    .sb-subject {
+      display:flex; align-items:center; gap:0.65rem;
+      padding:0.45rem 1.3rem 0.45rem 2rem;
+      cursor:pointer; font-size:0.86rem; color:var(--soft);
+      border-left:2px solid transparent;
+      transition:color 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .sb-subject:hover { color:var(--text); background:rgba(255,255,255,0.025); }
+    .sb-subject.active { color:var(--text); border-left-color:var(--gold); background:rgba(201,168,76,0.05); }
+    .sb-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+
+    /* CONTENT */
+    .content-panel { overflow:hidden; }
+
+    .welcome-panel {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; height:65vh; text-align:center; padding:3rem;
+    }
+    .welcome-panel .wi { font-size:2.8rem; margin-bottom:1.3rem; }
+    .welcome-panel h2 { font-family:'Playfair Display',serif; font-size:1.7rem; margin-bottom:0.6rem; }
+    .welcome-panel p { color:var(--muted); max-width:380px; line-height:1.7; font-size:0.92rem; }
+
+    /* Subject overview */
+    .subject-overview { padding:2.5rem 4vw; border-bottom:1px solid var(--border); }
+    .subject-overview h2 { font-family:'Playfair Display',serif; font-size:2rem; margin-bottom:0.4rem; }
+    .subject-overview p { color:var(--muted); font-size:0.88rem; line-height:1.6; max-width:480px; }
+
+    .topics-grid {
+      padding:2rem 4vw;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem;
+    }
+    .topic-card {
+      background:var(--card); border:1px solid var(--border);
+      padding:1.4rem; cursor:pointer; position:relative;
+      transition:border-color 0.2s, transform 0.2s, background 0.2s;
+    }
+    .topic-card:hover { border-color:var(--gold); transform:translateY(-2px); background:#1e1e1e; }
+    .topic-num { font-size:0.63rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; display:block; }
+    .topic-card h3 { font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:0.35rem; }
+    .topic-card p { color:var(--muted); font-size:0.8rem; line-height:1.5; margin-bottom:0.9rem; }
+    .topic-generate-btn { font-size:0.77rem; color:var(--gold); }
+    .topic-generate-btn::after { content:' →'; }
+
+    /* NOTES VIEWER */
+    .notes-viewer {
+      display:none; flex-direction:column;
+      height:calc(100vh - 57px); position:sticky; top:57px;
+    }
+    .notes-viewer.active { display:flex; }
+    .notes-header {
+      padding:1.3rem 4vw; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:flex-start;
+      background:var(--surface); flex-shrink:0;
+    }
+    .notes-breadcrumb { font-size:0.73rem; color:var(--muted); margin-bottom:0.3rem; }
+    .notes-breadcrumb b { color:var(--gold); }
+    .notes-title { font-family:'Playfair Display',serif; font-size:1.35rem; }
+    .back-btn {
+      background:none; border:1px solid var(--border); color:var(--muted);
+      padding:0.38rem 0.85rem; cursor:pointer; font-family:'DM Sans',sans-serif;
+      font-size:0.78rem; flex-shrink:0; margin-left:1rem; margin-top:0.1rem;
+      transition:color 0.2s, border-color 0.2s;
+    }
+    .back-btn:hover { color:var(--text); border-color:var(--soft); }
+
+    .notes-body { flex:1; overflow-y:auto; padding:2.2rem 4vw 4rem; }
+    .notes-body::-webkit-scrollbar { width:3px; }
+    .notes-body::-webkit-scrollbar-thumb { background:var(--border); }
+
+    /* Loading */
+    .loading-state {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; height:280px; gap:1.3rem;
+    }
+    .spinner {
+      width:38px; height:38px; border:2px solid var(--border);
+      border-top-color:var(--gold); border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading-text { color:var(--muted); font-size:0.88rem; }
+
+    /* Notes content */
+    .notes-content h1 {
+      font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900;
+      margin-bottom:0.4rem;
+    }
+    .notes-meta { font-size:0.78rem; color:var(--muted); padding-bottom:1.3rem; border-bottom:1px solid var(--border); margin-bottom:1.8rem; }
+    .notes-content h2 {
+      font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--gold);
+      margin:1.8rem 0 0.7rem; padding-bottom:0.4rem; border-bottom:1px solid var(--border);
+    }
+    .notes-content h3 {
+      font-family:'Playfair Display',serif; font-size:1rem; color:var(--text);
+      margin:1.3rem 0 0.45rem;
+    }
+    .notes-content p { color:#c8c4bc; line-height:1.85; font-size:0.91rem; margin-bottom:0.75rem; }
+    .notes-content ul, .notes-content ol { margin:0.4rem 0 0.9rem 1.2rem; }
+    .notes-content li { color:#c8c4bc; font-size:0.9rem; line-height:1.75; margin-bottom:0.25rem; }
+    .notes-content strong { color:var(--text); font-weight:500; }
+    .notes-content em { color:var(--gold); font-style:italic; }
+
+    .kt-box {
+      background:var(--card); border-left:3px solid var(--blue);
+      padding:0.9rem 1.1rem; margin:1rem 0;
+    }
+    .kt-label { font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--blue); display:block; margin-bottom:0.25rem; }
+    .kt-box p { margin:0; color:#c8c4bc; font-size:0.88rem; }
+
+    .exam-tip {
+      background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.18);
+      padding:1.1rem; margin:1.3rem 0; font-size:0.87rem; color:var(--text); line-height:1.7;
+    }
+    .exam-tip strong { color:var(--gold); }
+
+    /* Error */
+    .error-state { text-align:center; padding:3rem; }
+    .error-state p { color:var(--muted); margin-bottom:1rem; font-size:0.9rem; }
+    .retry-btn {
+      background:var(--gold); color:#0b0b0b; border:none;
+      padding:0.65rem 1.4rem; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.88rem; font-weight:500;
+    }
+
+    /* Streaming cursor */
+    .cursor {
+      display:inline-block; width:2px; height:1em;
+      background:var(--gold); animation:blink 0.7s infinite;
+      vertical-align:text-bottom; margin-left:2px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    footer {
+      padding:2.2rem 5vw; border-top:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:1rem;
+    }
+    footer p { color:var(--muted); font-size:0.8rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">Wald<span>Notes</span></a>
+  <span class="nav-tag">AI-Powered · ZIMSEC 2024–2030</span>
+</nav>
+
+<div id="heroSection">
+  <section class="hero">
+    <span class="hero-eyebrow">✦ Heritage-Based Education 2024–2030</span>
+    <h1>Every subject.<br/><em>Every topic.</em><br/>On demand.</h1>
+    <p>Pick any subject and topic from the sidebar. Claude AI generates detailed, exam-focused notes instantly — built around the ZIMSEC heritage-based syllabus.</p>
+    <div class="hero-stats">
+      <div><span class="stat-num">20+</span><span class="stat-label">Subjects</span></div>
+      <div><span class="stat-num">150+</span><span class="stat-label">Topics</span></div>
+      <div><span class="stat-num">∞</span><span class="stat-label">Notes Generated</span></div>
+    </div>
+  </section>
+  <div class="search-wrap">
+    <div class="search-inner">
+      <span style="color:var(--muted)">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search subjects or topics…" oninput="handleSearch(this.value)"/>
+    </div>
+  </div>
+</div>
+
+<div class="main-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="content-panel" id="contentPanel">
+
+    <div class="welcome-panel" id="welcomePanel">
+      <div class="wi">📚</div>
+      <h2>Choose a subject to begin</h2>
+      <p>Select a subject from the sidebar, then click any topic to generate comprehensive AI study notes.</p>
+    </div>
+
+    <div id="subjectOverview" style="display:none">
+      <div class="subject-overview">
+        <h2 id="overviewTitle"></h2>
+        <p id="overviewDesc"></p>
+      </div>
+      <div class="topics-grid" id="topicsGrid"></div>
+    </div>
+
+    <div class="notes-viewer" id="notesViewer">
+      <div class="notes-header">
+        <div>
+          <div class="notes-breadcrumb"><b id="notesBreadcrumb"></b></div>
+          <div class="notes-title" id="notesTitle"></div>
+        </div>
+        <button class="back-btn" onclick="closeNotes()">← Back</button>
+      </div>
+      <div class="notes-body" id="notesBody"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 <strong>WaldNotes</strong> — Free ZIMSEC AI Study Resources</p>
+  <p>Notes generated by AI · Always verify with your teacher</p>
+</footer>
+
+<script>
+const curriculum = {
+  compulsory: {
+    label:"Compulsory Subjects", color:"#c9a84c",
+    subjects:[
+      { id:"mathematics", name:"Mathematics", icon:"📐",
+        desc:"Number, algebra, geometry, statistics and probability.",
+        topics:[
+          {id:"numbers",name:"Numbers & Number Systems",desc:"Real numbers, integers, fractions, decimals, surds"},
+          {id:"algebra",name:"Algebra",desc:"Expressions, equations, inequalities, functions"},
+          {id:"geometry",name:"Geometry & Mensuration",desc:"Shapes, angles, area, volume, transformations"},
+          {id:"trigonometry",name:"Trigonometry",desc:"Sine, cosine, tangent, graphs, applications"},
+          {id:"statistics",name:"Statistics & Probability",desc:"Data handling, mean, median, mode, probability"},
+          {id:"vectors",name:"Vectors & Matrices",desc:"Vector operations, matrices, transformations"},
+          {id:"graphs",name:"Graphs & Functions",desc:"Linear, quadratic, cubic graphs and properties"},
+          {id:"calculus",name:"Introduction to Calculus",desc:"Differentiation and integration basics"},
+        ]},
+      { id:"english", name:"English Language", icon:"✍️",
+        desc:"Reading, writing, comprehension, and communication in English.",
+        topics:[
+          {id:"comprehension",name:"Comprehension",desc:"Reading strategies, inference, summary skills"},
+          {id:"essay",name:"Essay Writing",desc:"Argumentative, descriptive, narrative, expository essays"},
+          {id:"summary",name:"Summary Writing",desc:"Identifying key points and concise expression"},
+          {id:"grammar",name:"Grammar & Usage",desc:"Tenses, sentence structure, punctuation, vocabulary"},
+          {id:"letters",name:"Letter & Report Writing",desc:"Formal and informal letter formats, reports"},
+          {id:"oral",name:"Oral Communication",desc:"Speaking, listening, debate, presentation skills"},
+        ]},
+      { id:"heritage", name:"Heritage Studies", icon:"🏛️",
+        desc:"Zimbabwe's culture, identity, values, and national heritage.",
+        topics:[
+          {id:"unhu",name:"Unhu/Ubuntu/Vumunhu",desc:"Philosophy of being, societal norms and values"},
+          {id:"symbols",name:"National Symbols & Identity",desc:"Flag, anthem, coat of arms, national monuments"},
+          {id:"culture",name:"Cultural Practices & Rites",desc:"Rites of passage, ceremonies, traditions"},
+          {id:"gender",name:"Gender Roles & Rights",desc:"Gender equality, women's rights, child rights"},
+          {id:"rights",name:"Human Rights & Democracy",desc:"Rights, responsibilities, governance, constitution"},
+          {id:"environment",name:"Environmental Heritage",desc:"Conservation, natural resources, sustainability"},
+          {id:"enterprise",name:"Enterprise & Financial Literacy",desc:"Entrepreneurship, savings, budgeting"},
+          {id:"health",name:"Health & Heritage",desc:"Traditional medicine, HIV/AIDS, chronic diseases"},
+          {id:"disaster",name:"Disaster Risk Management",desc:"Natural disasters, preparedness, response"},
+        ]},
+      { id:"combined-science", name:"Combined Science", icon:"🔬",
+        desc:"Integrated biology, chemistry, and physics.",
+        topics:[
+          {id:"cells",name:"Cells & Living Organisms",desc:"Cell structure, life processes, classification"},
+          {id:"nutrition",name:"Nutrition & Digestion",desc:"Food groups, digestive system, photosynthesis"},
+          {id:"respiration",name:"Respiration & Gas Exchange",desc:"Aerobic/anaerobic respiration, lungs"},
+          {id:"reproduction",name:"Reproduction",desc:"Sexual/asexual reproduction, human reproduction"},
+          {id:"ecology",name:"Ecology & Environment",desc:"Food chains, ecosystems, conservation"},
+          {id:"matter",name:"States of Matter",desc:"Particles, changes of state, diffusion"},
+          {id:"atomic",name:"Atomic Structure",desc:"Atoms, elements, periodic table, bonding"},
+          {id:"reactions",name:"Chemical Reactions",desc:"Types of reactions, equations, rates"},
+          {id:"electricity",name:"Electricity",desc:"Current, voltage, resistance, circuits"},
+          {id:"forces",name:"Forces & Motion",desc:"Newton's laws, speed, acceleration, pressure"},
+          {id:"waves",name:"Waves & Optics",desc:"Light, sound, reflection, refraction"},
+        ]},
+      { id:"indigenous-lang", name:"Shona / Ndebele", icon:"🗣️",
+        desc:"Indigenous language, literature, and oral tradition.",
+        topics:[
+          {id:"grammar-lang",name:"Grammar & Structure",desc:"Noun classes, verb tenses, sentence construction"},
+          {id:"oral-tradition",name:"Oral Tradition",desc:"Proverbs (tsumo), riddles, folklore (ngano)"},
+          {id:"literature-lang",name:"Literature & Set Texts",desc:"Novel, short story, poem analysis"},
+          {id:"composition",name:"Composition Writing",desc:"Narrative, descriptive, persuasive writing"},
+          {id:"comprehension-lang",name:"Comprehension",desc:"Reading and interpreting texts"},
+          {id:"culture-lang",name:"Culture & Language",desc:"Language and cultural identity, respect forms"},
+        ]},
+    ]},
+  sciences: {
+    label:"Sciences", color:"#4caf7d",
+    subjects:[
+      { id:"physics", name:"Physics", icon:"⚡",
+        desc:"Mechanics, waves, electricity, magnetism, and modern physics.",
+        topics:[
+          {id:"mechanics",name:"Mechanics",desc:"Motion, forces, Newton's laws, energy, momentum"},
+          {id:"thermal",name:"Thermal Physics",desc:"Heat, temperature, kinetic theory, gas laws"},
+          {id:"waves-p",name:"Waves",desc:"Transverse/longitudinal waves, sound, EM spectrum"},
+          {id:"optics",name:"Optics",desc:"Reflection, refraction, lenses, optical instruments"},
+          {id:"electromag",name:"Electricity & Magnetism",desc:"Fields, circuits, electromagnetic induction"},
+          {id:"nuclear",name:"Modern Physics",desc:"Radioactivity, nuclear energy, atomic structure"},
+        ]},
+      { id:"chemistry", name:"Chemistry", icon:"🧪",
+        desc:"Atomic theory, chemical reactions, organic chemistry.",
+        topics:[
+          {id:"atomic-chem",name:"Atomic Structure & Bonding",desc:"Electrons, orbitals, ionic/covalent/metallic bonding"},
+          {id:"periodic",name:"The Periodic Table",desc:"Groups, periods, trends, transition metals"},
+          {id:"stoich",name:"Stoichiometry & Equations",desc:"Moles, molar mass, balancing equations"},
+          {id:"acids",name:"Acids, Bases & Salts",desc:"pH, neutralisation, salt preparation"},
+          {id:"redox",name:"Redox & Electrolysis",desc:"Oxidation states, electrochemical cells"},
+          {id:"organic",name:"Organic Chemistry",desc:"Hydrocarbons, functional groups, reactions"},
+          {id:"industrial",name:"Industrial Chemistry",desc:"Haber process, Contact process, Zimbabwe industries"},
+        ]},
+      { id:"biology", name:"Biology", icon:"🌿",
+        desc:"Life processes, genetics, ecology, and the human body.",
+        topics:[
+          {id:"cell-bio",name:"Cell Biology",desc:"Cell structure, division, transport across membranes"},
+          {id:"genetics",name:"Genetics & Heredity",desc:"DNA, inheritance, Mendelian genetics, mutations"},
+          {id:"evolution",name:"Evolution",desc:"Darwin's theory, adaptation, speciation"},
+          {id:"human-body",name:"Human Body Systems",desc:"Circulatory, respiratory, nervous, endocrine"},
+          {id:"plants",name:"Plant Biology",desc:"Photosynthesis, transpiration, plant reproduction"},
+          {id:"eco-bio",name:"Ecology",desc:"Biomes, food webs, nutrient cycles, conservation"},
+          {id:"disease",name:"Disease & Immunity",desc:"Pathogens, immune system, vaccines, HIV/AIDS"},
+        ]},
+      { id:"agriculture", name:"Agriculture", icon:"🌾",
+        desc:"Crop production, livestock, soils, and Zimbabwean farming.",
+        topics:[
+          {id:"soils",name:"Soils & Soil Management",desc:"Soil types, fertility, erosion, conservation"},
+          {id:"crops",name:"Crop Production",desc:"Planting, crop rotation, irrigation, harvesting"},
+          {id:"livestock",name:"Livestock Management",desc:"Cattle, poultry, goats — feeding and disease"},
+          {id:"pests",name:"Pests & Diseases",desc:"Identification, prevention, integrated pest management"},
+          {id:"farm-tools",name:"Farm Tools & Equipment",desc:"Hand tools, machinery, maintenance"},
+          {id:"agribiz",name:"Agribusiness & Marketing",desc:"Farm records, budgets, marketing produce"},
+        ]},
+    ]},
+  humanities: {
+    label:"Humanities", color:"#c94c6e",
+    subjects:[
+      { id:"history", name:"History", icon:"📜",
+        desc:"Zimbabwe, Africa, and world history.",
+        topics:[
+          {id:"pre-colonial",name:"Pre-Colonial Zimbabwe",desc:"San, Bantu migrations, Great Zimbabwe, Mutapa state"},
+          {id:"mfecane",name:"The Mfecane & Ndebele State",desc:"Shaka, Mzilikazi, Ndebele Kingdom in Zimbabwe"},
+          {id:"colonisation",name:"Colonial Conquest",desc:"Missionaries, BSAC, Pioneer Column, occupation"},
+          {id:"resistance",name:"First Chimurenga (1896–97)",desc:"Nehanda, Sekuru Kaguvi, resistance to colonialism"},
+          {id:"company-rule",name:"Company Rule & Federation",desc:"BSAC rule, Land Apportionment Act, Federation 1953"},
+          {id:"nationalism",name:"Nationalist Movements",desc:"ZAPU, ZANU, UDI, rise of nationalism"},
+          {id:"liberation",name:"Liberation War (Chimurenga II)",desc:"Armed struggle, guerrilla war, Frontline States"},
+          {id:"independence",name:"Independence & Nation-Building",desc:"Lancaster House, independence 1980, post-independence"},
+          {id:"africa-hist",name:"Africa — Colonialism & Independence",desc:"Scramble for Africa, decolonisation movements"},
+          {id:"world-hist",name:"World History",desc:"WWI, WWII, Cold War, UN, globalisation"},
+        ]},
+      { id:"geography", name:"Geography", icon:"🌍",
+        desc:"Physical and human geography with Zimbabwean focus.",
+        topics:[
+          {id:"maps",name:"Map Reading & Fieldwork",desc:"Topographic maps, scale, grid references, contours"},
+          {id:"climate",name:"Weather & Climate",desc:"Zimbabwe climate, seasons, rainfall patterns"},
+          {id:"landforms",name:"Landforms & Geomorphology",desc:"Rivers, erosion, deposition, rocks and soils"},
+          {id:"population",name:"Population & Settlement",desc:"Demographics, urbanisation, migration in Zimbabwe"},
+          {id:"agri-geo",name:"Agriculture & Land Use",desc:"Farming systems, land reform, food security"},
+          {id:"mining-geo",name:"Mining & Industry",desc:"Zimbabwe's mineral resources, mining industry"},
+          {id:"energy-geo",name:"Energy Resources",desc:"Kariba, solar, coal — Zimbabwe's energy mix"},
+          {id:"env-geo",name:"Environmental Issues",desc:"Deforestation, pollution, climate change in Zimbabwe"},
+          {id:"africa-geo",name:"Africa — Physical & Human",desc:"African landforms, rivers, population, development"},
+        ]},
+      { id:"family-religion", name:"Family & Religious Studies", icon:"✝️",
+        desc:"Family, religion, ethics, and moral education.",
+        topics:[
+          {id:"family",name:"Family Life & Relationships",desc:"Marriage, parenting, roles in family"},
+          {id:"atr",name:"African Traditional Religion",desc:"Mwari, ancestors, spirit mediums, ceremonies"},
+          {id:"christianity",name:"Christianity in Zimbabwe",desc:"Mission churches, Pentecostalism, role in independence"},
+          {id:"islam",name:"Islam",desc:"Five pillars, beliefs, Islam in Africa"},
+          {id:"ethics",name:"Ethics & Moral Education",desc:"Right and wrong, justice, community values"},
+          {id:"hiv-rel",name:"HIV/AIDS & Religion",desc:"Faith responses, stigma, care and support"},
+        ]},
+    ]},
+  commercials: {
+    label:"Commercials", color:"#8b5cf6",
+    subjects:[
+      { id:"commerce", name:"Commerce", icon:"💼",
+        desc:"Trade, business, transport, and the Zimbabwean economy.",
+        topics:[
+          {id:"trade",name:"Home & International Trade",desc:"Imports, exports, balance of trade, protectionism"},
+          {id:"banking",name:"Banking & Finance",desc:"Reserve Bank of Zimbabwe, commercial banks, forex"},
+          {id:"insurance",name:"Insurance",desc:"Types of insurance, principles, claims"},
+          {id:"transport",name:"Transport & Communication",desc:"Modes of transport, ICT in business"},
+          {id:"warehousing",name:"Warehousing & Distribution",desc:"Storage, supply chain, wholesalers, retailers"},
+          {id:"consumer",name:"Consumer Protection",desc:"Consumer rights, Consumer Council of Zimbabwe"},
+        ]},
+      { id:"accounts", name:"Principles of Accounts", icon:"📊",
+        desc:"Bookkeeping, financial statements, and accounting principles.",
+        topics:[
+          {id:"bookkeeping",name:"Bookkeeping Basics",desc:"Double entry, ledgers, journals, trial balance"},
+          {id:"fin-statements",name:"Financial Statements",desc:"Income statement, balance sheet preparation"},
+          {id:"cashflow",name:"Cash Flow Statements",desc:"Cash flow forecasting and analysis"},
+          {id:"partnerships",name:"Partnership Accounts",desc:"Profit sharing, capital accounts, admission"},
+          {id:"companies",name:"Company Accounts",desc:"Share capital, dividends, published accounts"},
+          {id:"ratios",name:"Ratio Analysis",desc:"Liquidity, profitability and efficiency ratios"},
+        ]},
+      { id:"business", name:"Business Studies", icon:"🏢",
+        desc:"Business ownership, management, marketing, and enterprise.",
+        topics:[
+          {id:"biz-types",name:"Types of Business",desc:"Sole trader, partnership, company, cooperative"},
+          {id:"management",name:"Management & Leadership",desc:"Functions of management, leadership styles"},
+          {id:"marketing",name:"Marketing",desc:"The 4Ps, market research, advertising"},
+          {id:"hr",name:"Human Resources",desc:"Recruitment, training, motivation theories"},
+          {id:"finance-biz",name:"Business Finance",desc:"Sources of finance, budgeting, break-even analysis"},
+          {id:"entrepreneur",name:"Entrepreneurship",desc:"Business planning, innovation, risk-taking in Zimbabwe"},
+        ]},
+    ]},
+  languages: {
+    label:"Languages & Literature", color:"#4c8fc9",
+    subjects:[
+      { id:"lit-english", name:"Literature in English", icon:"📖",
+        desc:"Prose, poetry, drama, and literary analysis.",
+        topics:[
+          {id:"prose",name:"Prose Fiction",desc:"Novel analysis: character, theme, setting, style"},
+          {id:"poetry",name:"Poetry Analysis",desc:"Imagery, tone, rhythm, figures of speech"},
+          {id:"drama",name:"Drama",desc:"Dramatic techniques, stage directions, character study"},
+          {id:"devices",name:"Literary Devices",desc:"Simile, metaphor, irony, symbolism, alliteration"},
+          {id:"essay-lit",name:"Literary Essay Writing",desc:"Critical essays, close reading, textual evidence"},
+          {id:"african-lit",name:"African Literature",desc:"Zimbabwean and African authors, themes, context"},
+        ]},
+      { id:"lit-shona", name:"Literature in Shona", icon:"📚",
+        desc:"Shona prose, poetry, drama, and oral literature.",
+        topics:[
+          {id:"shona-novel",name:"Shona Novel Study",desc:"Character analysis, themes, plot in Shona texts"},
+          {id:"shona-poetry",name:"Shona Poetry",desc:"Zvitenderero, imagery, cultural themes"},
+          {id:"shona-drama",name:"Shona Drama",desc:"Dramatic devices, performance, script analysis"},
+          {id:"oral-lit",name:"Oral Literature",desc:"Ngano (folktales), tsumo (proverbs), nhetembo"},
+        ]},
+    ]},
+};
+
+let currentSubject = null;
+let currentTopic = null;
+let abortController = null;
+
+function renderSidebar(filter='') {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+  for (const [key, cluster] of Object.entries(curriculum)) {
+    const filtered = cluster.subjects.filter(s =>
+      !filter ||
+      s.name.toLowerCase().includes(filter.toLowerCase()) ||
+      s.topics.some(t => t.name.toLowerCase().includes(filter.toLowerCase()))
+    );
+    if (filter && filtered.length === 0) continue;
+    const sec = document.createElement('div');
+    sec.className = 'sb-cluster open';
+    sec.innerHTML = `
+      <div class="sb-cluster-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="sb-cluster-label" style="color:${cluster.color}">${cluster.label}</span>
+        <span class="sb-toggle">▾</span>
+      </div>
+      <div class="sb-subjects"></div>`;
+    const list = sec.querySelector('.sb-subjects');
+    (filter ? filtered : cluster.subjects).forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'sb-subject' + (currentSubject?.id === s.id ? ' active' : '');
+      el.innerHTML = `<span class="sb-dot" style="background:${cluster.color}"></span>${s.name}`;
+      el.onclick = () => showSubject(s, cluster.color);
+      list.appendChild(el);
+    });
+    sb.appendChild(sec);
+  }
+}
+
+function showSubject(subject, color) {
+  currentSubject = subject; currentTopic = null;
+  document.querySelectorAll('.sb-subject').forEach(el =>
+    el.classList.toggle('active', el.textContent.trim() === subject.name));
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('welcomePanel').style.display = 'none';
+  document.getElementById('subjectOverview').style.display = 'block';
+  document.getElementById('notesViewer').classList.remove('active');
+  document.getElementById('overviewTitle').textContent = subject.icon + ' ' + subject.name;
+  document.getElementById('overviewDesc').textContent = subject.desc;
+  const grid = document.getElementById('topicsGrid');
+  grid.innerHTML = '';
+  subject.topics.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'topic-card';
+    card.innerHTML = `
+      <span class="topic-num">Topic ${i+1}</span>
+      <h3>${t.name}</h3>
+      <p>${t.desc}</p>
+      <span class="topic-generate-btn">Generate Notes</span>`;
+    card.onclick = () => generateNotes(subject, t, color);
+    grid.appendChild(card);
+  });
+}
+
+async function generateNotes(subject, topic, color) {
+  currentTopic = topic;
+  document.getElementById('subjectOverview').style.display = 'none';
+  const viewer = document.getElementById('notesViewer');
+  viewer.classList.add('active');
+  document.getElementById('notesBreadcrumb').textContent = subject.name + ' › ';
+  document.getElementById('notesTitle').textContent = topic.name;
+  const body = document.getElementById('notesBody');
+  body.innerHTML = `<div class="loading-state"><div class="spinner"></div><p class="loading-text">Generating notes for <em>${topic.name}</em>…</p></div>`;
+  if (abortController) abortController.abort();
+  abortController = new AbortController();
+
+  const prompt = `You are WaldNotes, an expert ZIMSEC O-Level tutor for Zimbabwe. Generate comprehensive, exam-focused study notes.
+
+Subject: ${subject.name}
+Topic: ${topic.name}  
+Description: ${topic.desc}
+Curriculum: ZIMSEC Heritage-Based Education 2024–2030
+
+Structure your notes as follows:
+1. Brief introduction (2-3 sentences explaining the topic and its importance)
+2. 3-5 main subtopics with ## headings, each containing:
+   - Clear explanation
+   - Bullet points of key facts
+   - A Zimbabwe-specific example or context where relevant
+3. KEY TERMS section: list 4-6 terms formatted as **TERM**: definition
+4. EXAM TIPS section with 3 specific, actionable tips
+5. SUMMARY: the 5 most important points to remember
+
+Use clear English for Form 3-4 students. Ground content in Zimbabwean context. Use ## for main headings, ### for subheadings, **bold** for key terms.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1500, stream:true,
+        messages:[{role:"user",content:prompt}]
+      }),
+      signal:abortController.signal
+    });
+    if (!res.ok) throw new Error('API error');
+    body.innerHTML = '<div class="notes-content" id="notesOut"></div>';
+    const out = document.getElementById('notesOut');
+    let full = '';
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    while(true) {
+      const {done, value} = await reader.read();
+      if(done) break;
+      for(const line of dec.decode(value).split('\n')) {
+        if(line.startsWith('data: ')) {
+          try {
+            const d = JSON.parse(line.slice(6));
+            if(d.type==='content_block_delta' && d.delta?.text) {
+              full += d.delta.text;
+              out.innerHTML = md(full) + '<span class="cursor"></span>';
+              body.scrollTop = body.scrollHeight;
+            }
+          } catch(e){}
+        }
+      }
+    }
+    out.innerHTML = md(full);
+  } catch(err) {
+    if(err.name==='AbortError') return;
+    body.innerHTML = `<div class="error-state"><p>Could not generate notes. Please check your connection.</p><button class="retry-btn" onclick="generateNotes(currentSubject,currentTopic,'${color}')">Try Again</button></div>`;
+  }
+}
+
+function md(text) {
+  return text
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/gs,m=>'<ul>'+m+'</ul>')
+    .replace(/\n\n(?!<)/g,'</p><p>')
+    .replace(/(<strong>)([^<:]+):(< \/strong>)/g,'<div class="kt-box"><span class="kt-label">Key Term</span><p><strong>$2:</strong></p></div>')
+    .replace(/<h2>(EXAM TIPS?)<\/h2>/gi,'<h2>⚡ Exam Tips</h2>')
+    .replace(/<h2>(KEY TERMS?)<\/h2>/gi,'<h2>🔑 Key Terms</h2>')
+    .replace(/<h2>(SUMMARY)<\/h2>/gi,'<h2>📌 Summary</h2>');
+}
+
+function closeNotes() {
+  if(abortController) abortController.abort();
+  document.getElementById('notesViewer').classList.remove('active');
+  document.getElementById('subjectOverview').style.display = 'block';
+}
+
+function handleSearch(val) {
+  renderSidebar(val);
+}
+
+renderSidebar();
+</script>
+</body>
+</html>
